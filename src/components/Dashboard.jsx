@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import TransactionForm from './TransactionForm';
 import SavingsDisplay from './SavingsDisplay';
 import TransactionHistory from './TransactionHistory';
+import { users } from '../data/users';
 
 function Dashboard({ user, onLogout }) {
   const [transactions, setTransactions] = useState([]);
+  const [editingTransactionId, setEditingTransactionId] = useState(null);
   const navigate = useNavigate();
 
   // Load transactions from localStorage (in a real app, this would be from an API)
@@ -36,34 +38,62 @@ function Dashboard({ user, onLogout }) {
     setTransactions([...transactions, transaction]);
   };
 
+  const handleEditTransaction = (updatedTransaction) => {
+    setTransactions(
+      transactions.map(t =>
+        t.id === updatedTransaction.id ? updatedTransaction : t
+      )
+    );
+    // Reset editing state
+    setEditingTransactionId(null);
+  };
+
+  const handleDeleteTransaction = (transactionId) => {
+    setTransactions(transactions.filter(t => t.id !== transactionId));
+  };
+
+  // Pre-fill form when editing a transaction
+  const editTransaction = transactions.find(
+    t => t.id === editingTransactionId
+  );
+
   return (
     <div className="dashboard">
       <nav className="navbar">
         <h2>Menú</h2>
-        <button onClick={() => onLogout()}>Cerrar sesión</button>
+        <div className="nav-links">
+          <button onClick={() => onLogout()}>Cerrar sesión</button>
+          <button onClick={() => navigate('/profile')}>Mi Perfil</button>
+          <button onClick={() => navigate('/goals')}>Metas</button>
+        </div>
       </nav>
-      
+     
       <main className="main-content">
-        <SavingsDisplay 
-          user={user} 
-          totalSavings={totalSavings} 
-          individualSavings={individualSavings} 
-          transactions={transactions} 
+        <SavingsDisplay
+          user={user}
+          totalSavings={totalSavings}
+          individualSavings={individualSavings}
+          transactions={transactions}
         />
         
         {user.role === 'admin' && (
           <div className="admin-section">
             <h3>Administrar Ahorros</h3>
-            <TransactionForm 
-              onAddTransaction={handleAddTransaction} 
-              user={user} 
+            <TransactionForm
+              onAddTransaction={handleAddTransaction}
+              currentUser={user}
+              allUsers={users}
+              editingTransaction={editTransaction}
+              onEditTransaction={handleEditTransaction}
             />
           </div>
         )}
         
-        <TransactionHistory 
-          transactions={transactions} 
-          user={user} 
+        <TransactionHistory
+          transactions={transactions}
+          user={user}
+          onEditTransaction={(t) => setEditingTransactionId(t.id)}
+          onDeleteTransaction={handleDeleteTransaction}
         />
       </main>
     </div>

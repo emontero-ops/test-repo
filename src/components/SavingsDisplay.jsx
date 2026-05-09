@@ -1,5 +1,5 @@
-
 import React from 'react';
+import SavingsChart from './SavingsChart';
 
 function SavingsDisplay({ user, totalSavings, individualSavings, transactions }) {
   const userSavings = individualSavings[user.id] || 0;
@@ -43,6 +43,11 @@ function SavingsDisplay({ user, totalSavings, individualSavings, transactions })
         ) : (
           <p>No hay transacciones aún</p>
         )}
+      </div>
+      
+      <div className="chart-section">
+        <h3>Evolución del Ahorro Familiar</h3>
+        <SavingsChart transactions={transactions} />
       </div>
     </div>
   );
