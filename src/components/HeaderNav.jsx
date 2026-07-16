@@ -20,9 +20,7 @@ function HeaderNav({ user, onLogout, onMenuToggle }) {
   return (
     <>
       {/* Overlay para cerrar el menú al hacer clic fuera */}
-      {isMenuOpen && (
-        <div className="menu-overlay" onClick={() => setIsMenuOpen(false)}></div>
-      )}
+      <div className={`menu-overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
 
       {/* Top Header para el botón de menú en móvil */}
       <div className="top-header">
