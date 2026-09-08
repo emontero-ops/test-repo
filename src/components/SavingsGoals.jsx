@@ -26,6 +26,15 @@ function SavingsGoals({ user, onLogout }) {
     { value: 'car', label: 'Vehículo' },
     { value: 'investment', label: 'Inversión' }
   ];
+  const normalizeGoal = (g) => ({
+    id: g.id,
+    name: g.name,
+    targetAmount: g.target_amount,
+    currentAmount: g.current_amount,
+    targetDate: g.target_date,
+    category: g.category
+  });
+
 
   // Load goals from Supabase
   useEffect(() => {
@@ -42,7 +51,14 @@ function SavingsGoals({ user, onLogout }) {
         if (saved) setGoals(JSON.parse(saved));
         else setGoals([]);
       } else {
-        setGoals(data || []);
+        setGoals((data || []).map(g => ({
+          id: g.id,
+          name: g.name,
+          targetAmount: g.target_amount,
+          currentAmount: g.current_amount,
+          targetDate: g.target_date,
+          category: g.category
+        })));
       }
     };
     fetchGoals();
@@ -68,7 +84,7 @@ function SavingsGoals({ user, onLogout }) {
         console.error('Error inserting goal:', error);
         throw error;
       }
-      return data;
+      return normalizeGoal(data);
     } else {
       // Update existing goal
       const { data, error } = await supabase
@@ -87,7 +103,7 @@ function SavingsGoals({ user, onLogout }) {
         console.error('Error updating goal:', error);
         throw error;
       }
-      return data;
+      return normalizeGoal(data);
     }
   };
 
