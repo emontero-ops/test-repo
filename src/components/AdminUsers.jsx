@@ -32,7 +32,7 @@ function AdminUsers({ user, onLogout }) {
   };
 
   if (loading) return <div>Cargando...</div>;
-  if (user.role !== 'admin') return <div>Acceso denegado.</div>;
+  if (!user || user.role !== 'admin') return <div className="error">Acceso denegado.</div>;
 
   return (
     <div className="admin-page">

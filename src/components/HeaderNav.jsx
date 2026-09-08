@@ -39,6 +39,7 @@ function HeaderNav({ user, onLogout, onMenuToggle }) {
           <button onClick={() => handleNavigation('/profile')}>Mi Perfil</button>
           <button onClick={() => handleNavigation('/goals')}>Metas</button>
           {/* Puedes añadir más enlaces aquí si es necesario */}
+                    <button onClick={() => handleNavigation('/admin')}>Administración</button>
           <button className="logout-button" onClick={onLogout}>Cerrar sesión</button>
         </div>
       </nav>
