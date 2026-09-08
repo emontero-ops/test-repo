@@ -6,6 +6,7 @@ import Login from './components/Login.jsx';
 import Dashboard from './components/Dashboard.jsx';
 import Profile from './components/Profile';
 import SavingsGoals from './components/SavingsGoals.jsx';
+import AdminUsers from './components/AdminUsers.jsx';
 
 function AppContent() {
   const [user, setUser] = useState(null);
@@ -149,6 +150,14 @@ function AppContent() {
           path="/goals"
           element={user ? (
             <SavingsGoals user={user} onLogout={handleLogout} />
+          ) : (
+            <Navigate to="/" replace />
+          )}
+        />
+        <Route
+          path="/admin"
+          element={user ? (
+            <AdminUsers user={user} onLogout={handleLogout} />
           ) : (
             <Navigate to="/" replace />
           )}

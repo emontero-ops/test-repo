@@ -156,15 +156,15 @@ function Dashboard({ user, onLogout }) {
     }
   };
 
-  useEffect(() => {
-    const initData = async () => {
-      if (!user) return;
+    useEffect(() => {
+    if (!user) return;
 
+    const fetchData = async () => {
       // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, name, role, saldo_ahorrado, deuda_total');
-      
+     
       if (profilesError) {
         console.error('Error fetching profiles:', profilesError);
         return;
@@ -175,14 +175,13 @@ function Dashboard({ user, onLogout }) {
       const { data: txData, error: txError } = await supabase
         .from('transactions')
         .select('*');
-      
+     
       if (txError) {
         console.error('Error fetching transactions:', txError);
       } else {
         setTransactions(txData);
         // Auto-sync balances on mount
         await syncProfileBalances(profilesData, txData);
-        
         // Refresh profiles to get fresh data after potential sync
         const { data: refreshedProfiles } = await supabase
           .from('profiles')
@@ -193,7 +192,39 @@ function Dashboard({ user, onLogout }) {
       }
     };
 
-    initData();
+    fetchData();
+
+    // Set up realtime subscription for transactions
+    const transactionsChannel = supabase
+      .channel('custom-transactions-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'transactions' },
+        () => {
+          // Refetch data when transactions change
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Set up realtime subscription for profiles (to update balances)
+    const profilesChannel = supabase
+      .channel('custom-profiles-channel')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'profiles' },
+        () => {
+          // Refetch data when profiles change
+          fetchData();
+        }
+      )
+      .subscribe();
+
+    // Cleanup
+    return () => {
+      supabase.removeChannel(transactionsChannel);
+      supabase.removeChannel(profilesChannel);
+    };
   }, [user]);
 
     // Calculate individual savings and debts

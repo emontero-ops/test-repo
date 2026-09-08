@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import HeaderNav from './HeaderNav';
+import { supabase } from '../supabaseClient';
 
 function SavingsGoals({ user, onLogout }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -14,6 +15,7 @@ function SavingsGoals({ user, onLogout }) {
   });
   const [editingGoalId, setEditingGoalId] = useState(null);
   const [error, setError] = useState('');
+  const [goals, setGoals] = useState([]);
 
   const categories = [
     { value: 'general', label: 'General' },
@@ -25,20 +27,71 @@ function SavingsGoals({ user, onLogout }) {
     { value: 'investment', label: 'Inversión' }
   ];
 
-  // Load goals from localStorage
+  // Load goals from Supabase
   useEffect(() => {
-    const saved = localStorage.getItem('savingsGoals');
-    if (saved) {
-      setGoals(JSON.parse(saved));
+    const fetchGoals = async () => {
+      const { data, error } = await supabase
+        .from('goals')
+        .select('*')
+        .eq('user_id', user.id);
+     
+      if (error) {
+        console.error('Error fetching goals:', error);
+        // Fallback to localStorage if Supabase fails
+        const saved = localStorage.getItem('savingsGoals');
+        if (saved) setGoals(JSON.parse(saved));
+        else setGoals([]);
+      } else {
+        setGoals(data || []);
+      }
+    };
+    fetchGoals();
+  }, [user.id]);
+
+  // Sync goals to Supabase whenever they change (simplified for brevity)
+  const saveGoalToSupabase = async (goal) => {
+    if (goal.id && typeof goal.id === 'number') {
+      // New goal being synced for the first time or legacy
+      const { data, error } = await supabase
+        .from('goals')
+        .insert({
+          user_id: user.id,
+          name: goal.name,
+          target_amount: goal.targetAmount,
+          current_amount: goal.currentAmount,
+          target_date: goal.targetDate,
+          category: goal.category
+        })
+        .select()
+        .single();
+      if (error) {
+        console.error('Error inserting goal:', error);
+        throw error;
+      }
+      return data;
+    } else {
+      // Update existing goal
+      const { data, error } = await supabase
+        .from('goals')
+        .update({
+          name: goal.name,
+          target_amount: goal.targetAmount,
+          current_amount: goal.currentAmount,
+          target_date: goal.targetDate,
+          category: goal.category
+        })
+        .eq('id', goal.id)
+        .select()
+        .single();
+      if (error) {
+        console.error('Error updating goal:', error);
+        throw error;
+      }
+      return data;
     }
-  }, []);
+  };
 
-  // Save goals to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem('savingsGoals', JSON.stringify(goals));
-  }, [goals]);
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!newGoal.name.trim()) {
@@ -63,28 +116,42 @@ function SavingsGoals({ user, onLogout }) {
       ...newGoal,
       targetAmount,
       currentAmount,
-      id: Date.now(), // Simple ID generation
+      id: Date.now(), // Simple ID generation for local state
     };
 
-    if (editingGoalId) {
-      const updatedGoals = goals.map(goal =>
-        goal.id === editingGoalId ? goalData : goal
-      );
-      setGoals(updatedGoals);
-      setEditingGoalId(null);
-    } else {
-      setGoals([...goals, goalData]);
-    }
+    try {
+      if (editingGoalId) {
+        const updatedGoals = goals.map(goal =>
+          goal.id === editingGoalId ? goalData : goal
+        );
+        setGoals(updatedGoals);
+        setEditingGoalId(null);
+        // Save the updated goal to Supabase
+        await saveGoalToSupabase(goalData);
+      } else {
+        setGoals([...goals, goalData]);
+        setEditingGoalId(null);
+        // Save the new goal to Supabase and get the real ID
+        const savedGoal = await saveGoalToSupabase(goalData);
+        // Update the goal in the state with the real ID from Supabase
+        if (savedGoal) {
+          setGoals(prev => prev.map(g => g.id === goalData.id ? savedGoal : g));
+        }
+      }
 
-    // Reset form
-    setNewGoal({
-      name: '',
-      targetAmount: '',
-      currentAmount: '',
-      targetDate: '',
-      category: 'general'
-    });
-    setError('');
+      // Reset form
+      setNewGoal({
+        name: '',
+        targetAmount: '',
+        currentAmount: '',
+        targetDate: '',
+        category: 'general'
+      });
+      setError('');
+    } catch (err) {
+      console.error('Error saving goal:', err);
+      setError('Error al guardar la meta. Por favor intente de nuevo.');
+    }
   };
 
   const handleEditGoal = (goal) => {
@@ -98,8 +165,20 @@ function SavingsGoals({ user, onLogout }) {
     });
   };
 
-  const handleDeleteGoal = (id) => {
-    setGoals(goals.filter(goal => goal.id !== id));
+  const handleDeleteGoal = async (id) => {
+    try {
+      // Delete from Supabase
+      const { error } = await supabase
+        .from('goals')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+      // Remove from local state
+      setGoals(goals.filter(goal => goal.id !== id));
+    } catch (err) {
+      console.error('Error deleting goal:', err);
+      setError('Error al eliminar la meta. Por favor intente de nuevo.');
+    }
   };
 
   return (
@@ -198,7 +277,7 @@ function SavingsGoals({ user, onLogout }) {
           <h3>Mis Metas</h3>
           <div className="goals-grid">
             {goals.map((goal, index) => {
-              const progress = goal.targetAmount > 0 
+              const progress = goal.targetAmount > 0
                 ? Math.min((goal.currentAmount / goal.targetAmount) * 100, 100)
                 : 0;
 
