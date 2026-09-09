@@ -336,7 +336,7 @@ function Dashboard({ user, onLogout }) {
 
   return (
     <div className={`dashboard ${isMenuOpen ? 'menu-open' : ''}`}>
-      <HeaderNav user={user} onLogout={onLogout} onMenuToggle={(isOpen) => setIsMenuOpen(isOpen)} />
+      <HeaderNav user={user} onLogout={onLogout} isOpen={isMenuOpen} onMenuToggle={(isOpen) => setIsMenuOpen(isOpen)} />
 
       <main className="main-content">
         <SavingsDisplay

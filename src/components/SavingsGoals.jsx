@@ -66,7 +66,7 @@ function SavingsGoals({ user, onLogout }) {
 
   // Sync goals to Supabase whenever they change (simplified for brevity)
   const saveGoalToSupabase = async (goal) => {
-    if (goal.id && typeof goal.id === 'number') {
+    if (goal.id <= 0) {
       // New goal being synced for the first time or legacy
       const { data, error } = await supabase
         .from('goals')
@@ -132,26 +132,20 @@ function SavingsGoals({ user, onLogout }) {
       ...newGoal,
       targetAmount,
       currentAmount,
-      id: Date.now(), // Simple ID generation for local state
+      id: editingGoalId !== null ? editingGoalId : -Date.now(), // Negative for new goal
     };
 
     try {
       if (editingGoalId) {
-        const updatedGoals = goals.map(goal =>
-          goal.id === editingGoalId ? goalData : goal
-        );
-        setGoals(updatedGoals);
-        setEditingGoalId(null);
-        // Save the updated goal to Supabase
+        // En lugar de reemplazar el ID, simplemente actualizamos en Supabase
         await saveGoalToSupabase(goalData);
-      } else {
-        setGoals([...goals, goalData]);
+        setGoals(goals.map(goal => goal.id === editingGoalId ? goalData : goal));
         setEditingGoalId(null);
-        // Save the new goal to Supabase and get the real ID
+      } else {
+        // Guardar nueva meta
         const savedGoal = await saveGoalToSupabase(goalData);
-        // Update the goal in the state with the real ID from Supabase
         if (savedGoal) {
-          setGoals(prev => prev.map(g => g.id === goalData.id ? savedGoal : g));
+          setGoals([...goals.filter(g => g.id !== goalData.id), savedGoal]);
         }
       }
 
@@ -199,7 +193,7 @@ function SavingsGoals({ user, onLogout }) {
 
   return (
     <div className={`savings-goals-page ${isMenuOpen ? 'menu-open' : ''}`}>
-      <HeaderNav user={user} onLogout={onLogout} onMenuToggle={(isOpen) => setIsMenuOpen(isOpen)} />
+      <HeaderNav user={user} onLogout={onLogout} isOpen={isMenuOpen} onMenuToggle={(isOpen) => setIsMenuOpen(isOpen)} />
       {error && <div className="error">{error}</div>}
 
       <form onSubmit={handleSubmit} className="goals-form">

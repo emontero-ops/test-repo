@@ -77,7 +77,7 @@ function Profile({ user, onLogout }) {
 
   return (
     <div className={`profile-page ${isMenuOpen ? 'menu-open' : ''}`}>
-      <HeaderNav user={user} onLogout={onLogout} onMenuToggle={(isOpen) => setIsMenuOpen(isOpen)} />
+      <HeaderNav user={user} onLogout={onLogout} isOpen={isMenuOpen} onMenuToggle={(isOpen) => setIsMenuOpen(isOpen)} />
 
       {error && <div className="error">{error}</div>}
       {success && <div className="success">{success}</div>}
