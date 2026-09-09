@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Redirigiendo...</title>
+    <script>
+      // Single Page Apps redirect for GitHub Pages
+      // Keeps the original subpath and query parameters by encoding them into the redirect URL
+      const path = window.location.pathname;
+      const search = window.location.search;
+      const hash = window.location.hash;
+      
+      const prefix = '/banquito-montero';
+      let relPath = path;
+      if (path.startsWith(prefix)) {
+        relPath = path.substring(prefix.length);
+      }
+      
+      // Ensure relPath starts with a slash
+      if (!relPath.startsWith('/')) {
+        relPath = '/' + relPath;
+      }
+      
+      const redirectUrl = prefix + '/?p=' + encodeURIComponent(relPath) + '&q=' + encodeURIComponent(search) + hash;
+      window.location.replace(redirectUrl);
+    </script>
+  </head>
+  <body>
+    <p>Redirigiendo a la página solicitada...</p>
+  </body>
+</html>

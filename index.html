@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/banquito-montero/logo.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Banquito Montero</title>
+    <link rel="manifest" href="manifest.json" />
+    <script type="module" crossorigin src="/banquito-montero/assets/index-D77u5M9d.js"></script>
+    <link rel="stylesheet" crossorigin href="/banquito-montero/assets/index-o2_n87Uz.css">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script>
+      // Register service worker if supported
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          // Calculate correct SW path based on current location
+          const swUrl = new URL('./sw.js', window.location.href).toString();
+          
+          navigator.serviceWorker.register(swUrl)
+            .then((registration) => {
+              console.log('SW registered: ', registration);
+            })
+            .catch((error) => {
+              console.log('SW registration failed: ', error);
+            });
+        });
+      }
+    </script>
+  </body>
+</html>
